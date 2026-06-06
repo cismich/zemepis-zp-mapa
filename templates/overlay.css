@@ -1,0 +1,711 @@
+/* GLOBÁLNÍ PROMĚNNÉ */
+:root {
+  --panel-bg-light: rgba(255, 255, 255, 0.82);
+  --panel-bg-dark: rgba(15, 23, 42, 0.85);
+  --text-light: #1e293b;
+  --text-dark: #f1f5f9;
+  --border-light: rgba(255, 255, 255, 0.35);
+  --border-dark: rgba(255, 255, 255, 0.08);
+}
+
+/* PLOVOUCÍ TLAČÍTKO PRO VYJETÍ PANELU */
+#overlay-toggle-btn {
+  position: fixed;
+  top: 15px;
+  right: 15px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10000;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#overlay-toggle-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+#overlay-toggle-btn i {
+  font-size: 18px;
+  color: #334155;
+  transition: transform 0.3s;
+}
+
+#overlay-toggle-btn.open i {
+  transform: rotate(90deg);
+}
+
+/* HLAVNÍ KONTEJNER OVERLAYE */
+#right-overlay {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  width: 440px;
+  max-width: 100vw;
+  background: var(--panel-bg-light);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-left: 1px solid var(--border-light);
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.1);
+  z-index: 9999;
+  font-family: 'Outfit', sans-serif;
+  color: var(--text-light);
+  transform: translateX(100%);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+#right-overlay.open {
+  transform: translateX(0);
+}
+
+/* TMASVÝ REŽIM PANELU */
+#right-overlay.dark-theme {
+  background: var(--panel-bg-dark);
+  border-left: 1px solid var(--border-dark);
+  color: var(--text-dark);
+}
+
+/* HLAVIČKA PANELU */
+#overlay-header {
+  padding: 24px 24px 16px 24px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#right-overlay.dark-theme #overlay-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+#overlay-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #1e293b, #475569);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+#right-overlay.dark-theme #overlay-header h2 {
+  background: linear-gradient(135deg, #ffffff, #cbd5e1);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+#overlay-header p {
+  margin: 2px 0 0 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+#right-overlay.dark-theme #overlay-header p {
+  color: #94a3b8;
+}
+
+#overlay-close-btn {
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  transition: background 0.2s, color 0.2s;
+}
+
+#overlay-close-btn:hover {
+  background: rgba(0,0,0,0.05);
+  color: #0f172a;
+}
+
+#right-overlay.dark-theme #overlay-close-btn:hover {
+  background: rgba(255,255,255,0.08);
+  color: #ffffff;
+}
+
+/* OBSAH PANELU (SCROLLOVATELNÝ) */
+#overlay-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  scrollbar-width: thin;
+}
+
+.section-title {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748b;
+  margin: 0 0 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#right-overlay.dark-theme .section-title {
+  color: #94a3b8;
+}
+
+/* STATISTICKÉ KARTY */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.stat-card {
+  background: rgba(255, 255, 255, 0.45);
+  border: 1px solid rgba(0,0,0,0.04);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s, background 0.2s;
+}
+
+#right-overlay.dark-theme .stat-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.65);
+}
+
+#right-overlay.dark-theme .stat-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.stat-label {
+  font-size: 10px;
+  font-weight: 500;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin-bottom: 4px;
+  line-height: 1.2;
+}
+
+.stat-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  word-break: break-all;
+}
+
+#right-overlay.dark-theme .stat-value {
+  color: #ffffff;
+}
+
+.stat-sub {
+  font-size: 9px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+/* SEZNAM SENZORŮ */
+.sensors-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sensor-card {
+  background: rgba(255, 255, 255, 0.45);
+  border: 1px solid rgba(0,0,0,0.04);
+  border-left: 4px solid var(--sensor-color);
+  border-radius: 10px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+#right-overlay.dark-theme .sensor-card {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.04);
+  border-left-color: var(--sensor-color);
+}
+
+.sensor-card:hover {
+  background: rgba(255, 255, 255, 0.75);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+}
+
+#right-overlay.dark-theme .sensor-card:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.sensor-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.sensor-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  white-space: nowrap;
+}
+
+#right-overlay.dark-theme .sensor-name {
+  color: #ffffff;
+}
+
+.sensor-type {
+  font-size: 11px;
+  color: #64748b;
+  font-style: italic;
+  text-align: right;
+  word-break: break-word;
+}
+
+#right-overlay.dark-theme .sensor-type {
+  color: #94a3b8;
+}
+
+.sensor-averages {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  background: rgba(0,0,0,0.02);
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 10.5px;
+}
+
+#right-overlay.dark-theme .sensor-averages {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.sensor-avg-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.sensor-avg-lbl {
+  color: #64748b;
+  font-size: 9px;
+}
+
+.sensor-avg-val {
+  font-weight: 600;
+  color: #334155;
+}
+
+#right-overlay.dark-theme .sensor-avg-val {
+  color: #cbd5e1;
+}
+
+/* PROHLÍŽEČ DAT (DATA EXPLORER) */
+.explorer-container {
+  background: rgba(255, 255, 255, 0.35);
+  border: 1px solid rgba(0,0,0,0.04);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+#right-overlay.dark-theme .explorer-container {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.04);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: 11px;
+  font-weight: 500;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.select-input {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.08);
+  background: rgba(255,255,255,0.7);
+  font-family: inherit;
+  font-size: 13px;
+  color: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.select-input:focus {
+  border-color: #94a3b8;
+}
+
+#right-overlay.dark-theme .select-input {
+  background: rgba(15, 23, 42, 0.6);
+  border-color: rgba(255,255,255,0.08);
+}
+
+.search-export-bar {
+  display: flex;
+  gap: 8px;
+}
+
+.search-input {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.08);
+  background: rgba(255,255,255,0.7);
+  font-family: inherit;
+  font-size: 13px;
+  color: inherit;
+  outline: none;
+}
+
+#right-overlay.dark-theme .search-input {
+  background: rgba(15, 23, 42, 0.6);
+  border-color: rgba(255,255,255,0.08);
+}
+
+.action-btn {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.08);
+  background: #0f172a;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.2s;
+}
+
+.action-btn:hover {
+  background: #334155;
+}
+
+#right-overlay.dark-theme .action-btn {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: transparent;
+}
+
+#right-overlay.dark-theme .action-btn:hover {
+  background: #cbd5e1;
+}
+
+.table-wrapper {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid rgba(0,0,0,0.05);
+  border-radius: 8px;
+  background: rgba(255,255,255,0.2);
+}
+
+#right-overlay.dark-theme .table-wrapper {
+  border-color: rgba(255, 255, 255, 0.05);
+  background: rgba(0,0,0,0.1);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  text-align: left;
+}
+
+.data-table th {
+  position: sticky;
+  top: 0;
+  background: #f8fafc;
+  padding: 8px 12px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  font-size: 10px;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+#right-overlay.dark-theme .data-table th {
+  background: #1e293b;
+  color: #94a3b8;
+  border-bottom-color: rgba(255, 255, 255, 0.05);
+}
+
+.data-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(0,0,0,0.02);
+}
+
+#right-overlay.dark-theme .data-table td {
+  border-bottom-color: rgba(255, 255, 255, 0.02);
+}
+
+.data-table tbody tr:hover {
+  background: rgba(0,0,0,0.02);
+}
+
+#right-overlay.dark-theme .data-table tbody tr:hover {
+  background: rgba(255,255,255,0.02);
+}
+
+/* OVLÁDÁNÍ A NASTAVENÍ MAPY */
+.control-card {
+  background: rgba(255, 255, 255, 0.35);
+  border: 1px solid rgba(0,0,0,0.04);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+#right-overlay.dark-theme .control-card {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.04);
+}
+
+.control-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.control-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.control-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.control-value {
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+}
+
+#right-overlay.dark-theme .control-value {
+  color: #cbd5e1;
+}
+
+.range-slider {
+  width: 100%;
+  -webkit-appearance: none;
+  background: rgba(0,0,0,0.08);
+  height: 6px;
+  border-radius: 3px;
+  outline: none;
+}
+
+#right-overlay.dark-theme .range-slider {
+  background: rgba(255,255,255,0.1);
+}
+
+.range-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #0f172a;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.range-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+#right-overlay.dark-theme .range-slider::-webkit-slider-thumb {
+  background: #f1f5f9;
+}
+
+.basemap-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.basemap-btn {
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.08);
+  background: rgba(255,255,255,0.6);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.basemap-btn.active {
+  background: #0f172a;
+  color: #ffffff;
+  border-color: #0f172a;
+}
+
+#right-overlay.dark-theme .basemap-btn {
+  background: rgba(255,255,255,0.03);
+  border-color: rgba(255,255,255,0.06);
+  color: #94a3b8;
+}
+
+#right-overlay.dark-theme .basemap-btn.active {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: transparent;
+}
+
+/* ---------------------------------------------------------
+   NOVÁ KOMPONENTA: VELKÉ POPUP OKNO (MODAL)
+   --------------------------------------------------------- */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 20000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.modal-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-window {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+  border-radius: 16px;
+  width: 800px;
+  max-width: 90vw;
+  height: 600px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform: scale(0.95);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  font-family: 'Outfit', sans-serif;
+  color: #1e293b;
+}
+
+.modal-backdrop.open .modal-window {
+  transform: scale(1);
+}
+
+/* Synchronizace s tmavým tématem */
+.modal-backdrop.dark-theme .modal-window {
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #f1f5f9;
+}
+
+.modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-backdrop.dark-theme .modal-header {
+  border-bottom-color: rgba(255, 255, 255, 0.05);
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.modal-close-btn {
+  background: transparent;
+  border: none;
+  font-size: 28px;
+  cursor: pointer;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  transition: background 0.2s, color 0.2s;
+}
+
+.modal-close-btn:hover {
+  background: rgba(0,0,0,0.05);
+  color: #0f172a;
+}
+
+.modal-backdrop.dark-theme .modal-close-btn:hover {
+  background: rgba(255,255,255,0.08);
+  color: #ffffff;
+}
+
+.modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  scrollbar-width: thin;
+}

@@ -1,0 +1,120 @@
+<!-- OVLÁDACÍ TLAČÍTKO PANELU -->
+<div id="overlay-toggle-btn" onclick="toggleOverlay()">
+  <i class="fa-solid fa-sliders"></i>
+</div>
+
+<!-- PRAVÝ DISPLEJOVÝ PANEL -->
+<div id="right-overlay">
+  <div id="overlay-header">
+    <div>
+      <h2>Analýza teplot</h2>
+      <p>Moravská Třebová & okolí</p>
+    </div>
+    <button id="overlay-close-btn" onclick="toggleOverlay()">&times;</button>
+  </div>
+
+  <div id="overlay-content">
+    <!-- SEKCE 1: GLOBÁLNÍ STATISTIKY -->
+    <div>
+      <h3 class="section-title"><i class="fa-solid fa-chart-simple"></i> Přehled měření</h3>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-label">Intenzita UHI</span>
+          <span class="stat-value">{prumerny_rozdil_celkovy} °C</span>
+          <span class="stat-sub">město vs venkov</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Nejteplejší</span>
+          <span class="stat-value" style="font-size: 11px; font-weight:700;">{hottest_loc}</span>
+          <span class="stat-sub">{hottest_temp} °C průměr</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Nejchladnější</span>
+          <span class="stat-value" style="font-size: 11px; font-weight:700;">{coolest_loc}</span>
+          <span class="stat-sub">{coolest_temp} °C průměr</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEKCE 2: SEZNAM LOKALIT -->
+    <div>
+      <h3 class="section-title"><i class="fa-solid fa-location-dot"></i> Měřicí lokality</h3>
+      <div class="sensors-list">
+        {sensor_cards_html}
+      </div>
+    </div>
+
+    <!-- SEKCE 3: TABULKOVÝ PROHLÍŽEČ DAT -->
+    <div>
+      <h3 class="section-title"><i class="fa-solid fa-database"></i> Prohlížeč dat</h3>
+      <div class="explorer-container">
+        <div class="form-group">
+          <label for="sensor-select">Zvolit senzor</label>
+          <select id="sensor-select" class="select-input" onchange="loadSensorData()">
+            {sensor_options_html}
+          </select>
+        </div>
+
+        <div class="search-export-bar">
+          <input type="text" id="table-search" class="search-input" placeholder="Hledat datum / teplotu..."
+            oninput="filterTable()">
+          <button class="action-btn" onclick="exportToCSV()"><i class="fa-solid fa-download"></i> CSV</button>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="data-table" id="data-table">
+            <thead>
+              <tr>
+                <th>Čas měření</th>
+                <th>Teplota (°C)</th>
+              </tr>
+            </thead>
+            <tbody id="table-body">
+              <!-- Dynamické řádky pomocí JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEKCE 4: NASTAVENÍ MAPY -->
+    <div>
+      <h3 class="section-title"><i class="fa-solid fa-gears"></i> Nastavení mapy</h3>
+      <div class="control-card">
+        <div class="control-row">
+          <div class="control-header">
+            <span class="control-label">Velikost bodů (Radius)</span>
+            <span class="control-value" id="radius-val">150 m</span>
+          </div>
+          <input type="range" class="range-slider" id="radius-slider" min="50" max="1000" value="150" step="10"
+            oninput="changeRadius(this.value)">
+        </div>
+
+        <div class="control-row">
+          <span class="control-label" style="margin-bottom: 4px;">Mapový podklad</span>
+          <div class="basemap-group">
+            <button class="basemap-btn active" id="basemap-light" onclick="setBasemap('light')">
+              <i class="fa-solid fa-sun"></i> Světlý
+            </button>
+            <button class="basemap-btn" id="basemap-dark" onclick="setBasemap('dark')">
+              <i class="fa-solid fa-moon"></i> Tmavý
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- VELKÉ POPUP OKNO (MODAL) PRO BUDOUCÍ FUNKCE -->
+<div id="global-modal" class="modal-backdrop" onclick="closeModal(event)">
+  <div class="modal-window" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3 id="modal-title">Název okna</h3>
+      <button class="modal-close-btn" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="modal-body-content">
+      <!-- Zde bude dynamický HTML obsah v budoucnu -->
+    </div>
+  </div>
+</div>
