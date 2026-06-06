@@ -11,7 +11,7 @@
   <div id="overlay-header">
     <div>
       <h2>Analýza teplot</h2>
-      <p>Moravská Třebová & okolí</p>
+      <p>Moravská Třebová a okolí</p>
     </div>
     <button id="overlay-close-btn" onclick="toggleOverlay()">&times;</button>
   </div>
@@ -62,7 +62,9 @@
           <input type="text" id="table-search" class="search-input" placeholder="Hledat datum / teplotu..."
             oninput="filterTable()">
           <button class="action-btn" onclick="exportToCSV()"><i class="fa-solid fa-download"></i> CSV</button>
-          <button class="action-btn" onclick="openFullAnalysis()" style="background: #0284c7; color: white; border-color: transparent;"><i class="fa-solid fa-chart-line"></i> Analýza</button>
+          <button class="action-btn" onclick="openFullAnalysis()"
+            style="background: #0284c7; color: white; border-color: transparent;"><i class="fa-solid fa-chart-line"></i>
+            Graf</button>
         </div>
 
         <div class="table-wrapper">
@@ -125,7 +127,7 @@
           <div class="sensor-checkboxes" id="modal-sensor-checkboxes">
             <!-- Dynamicky doplňované checkboxy -->
           </div>
-          
+
           <h4 class="modal-subtitle" style="margin-top: 20px;">Časové rozmezí</h4>
           <div class="range-filters">
             <div class="form-group">
@@ -137,12 +139,13 @@
               <input type="date" id="modal-date-end" class="select-input" onchange="updateModalChart()">
             </div>
           </div>
-          
-          <div class="range-info" id="range-warning" style="margin-top: 12px; color: #ef4444; font-size: 11px; display: none;">
+
+          <div class="range-info" id="range-warning"
+            style="margin-top: 12px; color: #ef4444; font-size: 11px; display: none;">
             Varování: Rozsah je omezen nastavením v settings.py.
           </div>
         </div>
-        
+
         <div class="modal-chart-area">
           <canvas id="modal-chart"></canvas>
         </div>
