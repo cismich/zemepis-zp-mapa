@@ -11,8 +11,22 @@ DEN_START = 4   # Zahrnout od dne (např. 4. den = 2024-04-30)
 DEN_KONEC = 17  # Zahrnout do dne (např. 17. den = 2024-05-13)
 
 # Oprava pro senzor L-V1 (Lesní krajina)
-# Od kterého dne se mají brát data pro tento konkrétní senzor (např. 13. den)
+# Od kterého dne se mají brát reálná data pro tento konkrétní senzor (např. 13. den)
 LES_OPRAVA_START_DEN = 13
+
+# Odhad (imputace) chybějících dat pro Lesní krajinu před startovním dnem:
+# True  = odhadnout chybějící hodnoty na základě referenčního senzoru
+# False = ponechat chybějící (na grafech bude prázdné místo, v průměrech se nebude počítat)
+LES_IMPUTACE_AKTIVNI = True
+
+# Referenční senzor použitý k odhadu (klíč z CSV, např. "Niky" pro Venkovskou krajinu)
+LES_IMPUTACE_REFERENCE = "Niky"
+
+# Metoda odhadu chybějících hodnot:
+# 'multiple' = vícesenzorová regrese (odhad na základě chování všech ostatních senzorů dohromady)
+# 'linear'   = lineární regrese (L-V1 = a * ref + b) - zohledňuje rozdíly v denní teplotní amplitudě
+# 'offset'   = konstantní posun (L-V1 = ref + průměrný_rozdíl)
+LES_IMPUTACE_METODA = "multiple"
 
 # Střed mapy při prvním načtení [zeměpisná šířka, zeměpisná délka]
 MAPA_STRED = [49.7583, 16.6651]  # Moravská Třebová

@@ -42,7 +42,7 @@ df_vysledne.index.name = "Datum_a_Cas"
 df_vysledne = df_vysledne[(df_vysledne.index >= pocatek_mereni + pd.Timedelta(days=settings.DEN_START)) & 
                           (df_vysledne.index <= pocatek_mereni + pd.Timedelta(days=settings.DEN_KONEC))]
 
-# Oprava pro senzor L-V1 podle nastavení
+# Oprava pro senzor L-V1 podle nastavení (v hlavním datasetu necháme jako chybějící hodnoty pro výpočty)
 mask = df_vysledne.index >= pocatek_mereni + pd.Timedelta(days=settings.LES_OPRAVA_START_DEN)
 if "L-V1" in df_vysledne.columns:
     df_vysledne.loc[~mask, "L-V1"] = np.nan
@@ -175,12 +175,81 @@ import json
 # Převod souřadnic na JSON pro JavaScript
 json_coords = json.dumps(souradnice)
 
-# Převod celých dat df_vysledne do JSONu (pro prohlížeč dat v JS)
+# Převod celých realných dat df_vysledne do JSONu (pro prohlížeč dat a CSV)
 df_pro_json = df_vysledne.copy()
 df_pro_json.index = df_pro_json.index.strftime('%Y-%m-%d %H:%M')
 # Nahrazení případných NaN (chybějících) hodnot za None, aby se v JSONu správně uložily jako null
 df_pro_json = df_pro_json.replace({np.nan: None})
 json_data = json.dumps(df_pro_json.to_dict(orient='index'))
+
+# Příprava odhadnutých dat do JSONu (pouze pro interaktivní srovnávací graf v modalu)
+df_imputed = df_vysledne.copy()
+if getattr(settings, "LES_IMPUTACE_AKTIVNI", False):
+    metoda = getattr(settings, "LES_IMPUTACE_METODA", "linear")
+    
+    if "Lesní krajina" in df_imputed.columns:
+        mask_missing = df_imputed["Lesní krajina"].isna()
+        
+        if metoda == "multiple":
+            # Vícesenzorová regrese podle všech ostatních dostupných senzorů
+            predictor_cols = [c for c in df_imputed.columns if c != ("Lesní krajina" or "Městský park")]
+            
+            # Ošetříme případné NaNs v prediktorech (ffill + bfill)
+            df_predictors = df_imputed[predictor_cols].ffill().bfill()
+            
+            # Překryvné období pro odhad (kde Lesní krajina má reálná data)
+            df_prekryv = df_imputed[["Lesní krajina"]].copy()
+            df_prekryv = df_prekryv.join(df_predictors).dropna()
+            
+            if len(df_prekryv) >= len(predictor_cols) + 1:
+                X_train = df_prekryv[predictor_cols].values
+                X_train = np.hstack([np.ones((X_train.shape[0], 1)), X_train])  # sloupec jedniček pro absolutní člen
+                y_train = df_prekryv["Lesní krajina"].values
+                
+                # Výpočet koeficientů metodou nejmenších čtverců
+                beta, _, _, _ = np.linalg.lstsq(X_train, y_train, rcond=None)
+                
+                # Predikce chybějících hodnot
+                X_predict = df_predictors.loc[mask_missing, predictor_cols].values
+                X_predict = np.hstack([np.ones((X_predict.shape[0], 1)), X_predict])
+                odhad = np.dot(X_predict, beta)
+                
+                coef_desc = ", ".join([f"{name}: {coef:.3f}" for name, coef in zip(predictor_cols, beta[1:])])
+                print(f"Odhady pro graf Lesní krajiny vypočteny vícesenzorovou regresí (intercept: {beta[0]:.3f}, {coef_desc})")
+                df_imputed.loc[mask_missing, "Lesní krajina"] = odhad
+            else:
+                print("VAROVÁNÍ: Nedostatek překrývajících se dat pro vícesenzorovou regresi. Používám jednoduchou regresi.")
+                metoda = "linear"  # Fallback na lineární regresi
+                
+        if metoda in ["linear", "offset"]:
+            ref_col = getattr(settings, "LES_IMPUTACE_REFERENCE", "Niky")
+            ref_col_mapped = nazvy_prostredi.get(ref_col, ref_col)
+            
+            if ref_col_mapped in df_imputed.columns:
+                df_prekryv = df_imputed[["Lesní krajina", ref_col_mapped]].dropna()
+                
+                if len(df_prekryv) >= 2:
+                    if metoda == "linear":
+                        # Lineární fit: L-V1 = a * ref + b
+                        a, b = np.polyfit(df_prekryv[ref_col_mapped], df_prekryv["Lesní krajina"], 1)
+                        odhad = df_imputed.loc[mask_missing, ref_col_mapped] * a + b
+                        print(f"Odhady pro graf Lesní krajiny vypočteny lineární regresí podle '{ref_col_mapped}' (a={a:.3f}, b={b:.3f})")
+                    else:
+                        # Konstantní posun: L-V1 = ref + průměrný_rozdíl
+                        rozdil = (df_prekryv["Lesní krajina"] - df_prekryv[ref_col_mapped]).mean()
+                        odhad = df_imputed.loc[mask_missing, ref_col_mapped] + rozdil
+                        print(f"Odhady pro graf Lesní krajiny vypočteny posunem podle '{ref_col_mapped}' (rozdíl: {rozdil:.2f} °C)")
+                    
+                    df_imputed.loc[mask_missing, "Lesní krajina"] = odhad
+                else:
+                    print("VAROVÁNÍ: Překryvné období neobsahuje dostatek společných dat. Chybějící data nebudou nahrazena.")
+            else:
+                print(f"VAROVÁNÍ: Referenční senzor '{ref_col_mapped}' nebyl nalezen. Chybějící data nebudou nahrazena.")
+
+df_imputed_pro_json = df_imputed.copy()
+df_imputed_pro_json.index = df_imputed_pro_json.index.strftime('%Y-%m-%d %H:%M')
+df_imputed_pro_json = df_imputed_pro_json.replace({np.nan: None})
+json_imputed_data = json.dumps(df_imputed_pro_json.to_dict(orient='index'))
 
 # Dynamická tvorba HTML pro seznam lokalit v panelu
 sensor_cards_html = ""
@@ -250,6 +319,7 @@ injected_html = injected_html.replace("{coolest_temp}", f"{coolest_temp:.2f}")
 injected_html = injected_html.replace("{sensor_cards_html}", sensor_cards_html)
 injected_html = injected_html.replace("{sensor_options_html}", sensor_options_html)
 injected_html = injected_html.replace("{json_data_str}", json_data)
+injected_html = injected_html.replace("{json_imputed_data_str}", json_imputed_data)
 injected_html = injected_html.replace("{json_coords_str}", json_coords)
 
 # Načtení hotového HTML souboru, vložení panelu před </body> a uložení

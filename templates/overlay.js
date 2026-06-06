@@ -1,5 +1,6 @@
 // Dynamická data injektovaná z Pythonu (placeholders)
 const rawSensorData = {json_data_str};
+const imputedSensorData = {json_imputed_data_str};
 const sensorCoords = {json_coords_str};
 
 let mapInstance = null;
@@ -257,7 +258,7 @@ function openFullAnalysis() {
   openModal("Podrobná teplotní analýza a srovnání");
 
   // 1. Zjistíme dostupné časové rozmezí z dat
-  const times = Object.keys(rawSensorData).sort();
+  const times = Object.keys(imputedSensorData).sort();
   if (times.length > 0) {
     const minTime = times[0];
     const maxTime = times[times.length - 1];
@@ -286,9 +287,9 @@ function openFullAnalysis() {
     checkboxContainer.innerHTML = "";
     
     // Použijeme senzory přítomné v datech (klíče prvního záznamu)
-    const firstTime = Object.keys(rawSensorData)[0];
+    const firstTime = Object.keys(imputedSensorData)[0];
     if (firstTime) {
-      const sensors = Object.keys(rawSensorData[firstTime]);
+      const sensors = Object.keys(imputedSensorData[firstTime]);
       sensors.forEach(sensor => {
         const color = sensorColors[sensor] || "#64748b";
         const div = document.createElement("div");
@@ -329,7 +330,7 @@ function updateModalChart() {
   }
 
   // Filtrujeme časy spadající do vybraného rozmezí
-  const filteredTimes = Object.keys(rawSensorData).sort().filter(time => {
+  const filteredTimes = Object.keys(imputedSensorData).sort().filter(time => {
     const date = time.split(" ")[0];
     return date >= startVal && date <= endVal;
   });
@@ -341,7 +342,7 @@ function updateModalChart() {
   // Připravíme datové sady pro Chart.js
   const datasets = activeSensors.map(sensor => {
     const color = sensorColors[sensor] || "#64748b";
-    const dataPoints = filteredTimes.map(time => rawSensorData[time][sensor]);
+    const dataPoints = filteredTimes.map(time => imputedSensorData[time][sensor]);
 
     return {
       label: sensor,
