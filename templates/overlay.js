@@ -207,6 +207,16 @@ function exportToCSV() {
 /* ---------------------------------------------------------
    POMOCNÉ JS FUNKCE PRO MAKSIMÁLNÍ POPUP OKNO (MODAL)
    --------------------------------------------------------- */
+// Globální proměnné pro správu grafu a barev
+let modalChartInstance = null;
+const sensorColors = {
+  "Centrum města": "#e31a1c",
+  "Okraj města": "#ff7f00",
+  "Městský park": "#fdbf6f",
+  "Venkovská krajina": "#33a02c",
+  "Lesní krajina": "#1f78b4"
+};
+
 function openModal(title, htmlContent) {
   const modal = document.getElementById("global-modal");
   const titleEl = document.getElementById("modal-title");
@@ -215,7 +225,10 @@ function openModal(title, htmlContent) {
   if (!modal || !titleEl || !bodyEl) return;
   
   titleEl.textContent = title;
-  bodyEl.innerHTML = htmlContent;
+  // Pokud je předán obsah, přepíšeme modal. Pokud ne, zachováme předpřipravenou HTML kostru.
+  if (htmlContent) {
+    bodyEl.innerHTML = htmlContent;
+  }
   
   // Detekce, zda je aktivní tmavý režim hlavního panelu, a synchronizace motivu
   const panel = document.getElementById("right-overlay");
@@ -236,6 +249,175 @@ function closeModal(event) {
   if (modal) {
     modal.classList.remove("open");
   }
+}
+
+// OTEVŘENÍ PLNÉHO ROZHRANÍ ANALÝZY S GRAFEM
+function openFullAnalysis() {
+  // Otevře modal s naším předpřipraveným layoutem
+  openModal("Podrobná teplotní analýza a srovnání");
+
+  // 1. Zjistíme dostupné časové rozmezí z dat
+  const times = Object.keys(rawSensorData).sort();
+  if (times.length > 0) {
+    const minTime = times[0];
+    const maxTime = times[times.length - 1];
+    
+    // Získáme pouze datum (YYYY-MM-DD)
+    const minDateStr = minTime.split(" ")[0];
+    const maxDateStr = maxTime.split(" ")[0];
+
+    const inputStart = document.getElementById("modal-date-start");
+    const inputEnd = document.getElementById("modal-date-end");
+
+    if (inputStart && inputEnd) {
+      inputStart.min = minDateStr;
+      inputStart.max = maxDateStr;
+      inputStart.value = minDateStr;
+
+      inputEnd.min = minDateStr;
+      inputEnd.max = maxDateStr;
+      inputEnd.value = maxDateStr;
+    }
+  }
+
+  // 2. Dynamicky vygenerujeme checkboxy pro senzory
+  const checkboxContainer = document.getElementById("modal-sensor-checkboxes");
+  if (checkboxContainer) {
+    checkboxContainer.innerHTML = "";
+    
+    // Použijeme senzory přítomné v datech (klíče prvního záznamu)
+    const firstTime = Object.keys(rawSensorData)[0];
+    if (firstTime) {
+      const sensors = Object.keys(rawSensorData[firstTime]);
+      sensors.forEach(sensor => {
+        const color = sensorColors[sensor] || "#64748b";
+        const div = document.createElement("div");
+        div.className = "checkbox-item";
+        div.style.setProperty("--sensor-color", color);
+        div.innerHTML = `
+          <input type="checkbox" id="chk-${sensor.replace(/\s+/g, '')}" value="${sensor}" checked onchange="updateModalChart()">
+          <span style="--sensor-color: ${color};">${sensor}</span>
+        `;
+        checkboxContainer.appendChild(div);
+      });
+    }
+  }
+
+  // 3. Vykreslíme výchozí graf
+  setTimeout(() => {
+    updateModalChart();
+  }, 100);
+}
+
+// AKTUALIZACE A VYKERESLENÍ GRAFU
+function updateModalChart() {
+  const startVal = document.getElementById("modal-date-start").value;
+  const endVal = document.getElementById("modal-date-end").value;
+  const warningEl = document.getElementById("range-warning");
+
+  if (!startVal || !endVal) return;
+
+  // Kontrola rozsahu
+  if (startVal > endVal) {
+    if (warningEl) {
+      warningEl.textContent = "Chyba: Datum od musí být před datem do.";
+      warningEl.style.display = "block";
+    }
+    return;
+  } else {
+    if (warningEl) warningEl.style.display = "none";
+  }
+
+  // Filtrujeme časy spadající do vybraného rozmezí
+  const filteredTimes = Object.keys(rawSensorData).sort().filter(time => {
+    const date = time.split(" ")[0];
+    return date >= startVal && date <= endVal;
+  });
+
+  // Zjistíme, které lokality jsou vybrané
+  const checkedBoxes = Array.from(document.querySelectorAll("#modal-sensor-checkboxes input:checked"));
+  const activeSensors = checkedBoxes.map(cb => cb.value);
+
+  // Připravíme datové sady pro Chart.js
+  const datasets = activeSensors.map(sensor => {
+    const color = sensorColors[sensor] || "#64748b";
+    const dataPoints = filteredTimes.map(time => rawSensorData[time][sensor]);
+
+    return {
+      label: sensor,
+      data: dataPoints,
+      borderColor: color,
+      backgroundColor: color + "1a", // 10% průhlednost pro výplň
+      borderWidth: 2,
+      tension: 0.15,
+      pointRadius: 0,
+      pointHoverRadius: 5,
+      fill: false
+    };
+  });
+
+  // Získání plátna canvasu
+  const canvas = document.getElementById("modal-chart");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+
+  // Pokud graf již existuje, zničíme jej před překreslením
+  if (modalChartInstance) {
+    modalChartInstance.destroy();
+  }
+
+  // Nastavení barev mřížky a textu podle motivu panelu
+  const panel = document.getElementById("right-overlay");
+  const isDark = panel && panel.classList.contains("dark-theme");
+  const gridColor = isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.05)";
+  const textColor = isDark ? "#cbd5e1" : "#475569";
+
+  modalChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: filteredTimes,
+      datasets: datasets
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        mode: 'index',
+        intersect: false
+      },
+      scales: {
+        x: {
+          grid: { color: gridColor },
+          ticks: {
+            color: textColor,
+            maxTicksLimit: 12
+          }
+        },
+        y: {
+          grid: { color: gridColor },
+          ticks: { color: textColor },
+          title: {
+            display: true,
+            text: 'Teplota (°C)',
+            color: textColor
+          }
+        }
+      },
+      plugins: {
+        legend: {
+          display: false // Vlastní checkboxy na levé straně zastoupí legendu
+        },
+        tooltip: {
+          backgroundColor: isDark ? "rgba(15, 23, 42, 0.95)" : "rgba(255, 255, 255, 0.95)",
+          titleColor: isDark ? "#ffffff" : "#0f172a",
+          bodyColor: isDark ? "#cbd5e1" : "#334155",
+          borderColor: isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.08)",
+          borderWidth: 1,
+          padding: 10
+        }
+      }
+    }
+  });
 }
 
 // Automatické načtení a dohledání Leaflet objektů po načtení stránky

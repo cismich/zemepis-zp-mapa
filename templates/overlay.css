@@ -709,3 +709,94 @@
   padding: 24px;
   scrollbar-width: thin;
 }
+
+/* Layout pro vnitřek velkého modalu s grafem */
+.modal-layout {
+  display: flex;
+  height: 100%;
+  gap: 24px;
+}
+
+@media (max-width: 768px) {
+  .modal-layout {
+    flex-direction: column;
+    height: auto;
+  }
+}
+
+.modal-controls {
+  width: 240px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: rgba(0, 0, 0, 0.02);
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.modal-backdrop.dark-theme .modal-controls {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.04);
+}
+
+.modal-subtitle {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  margin: 0 0 12px 0;
+}
+
+.modal-backdrop.dark-theme .modal-subtitle {
+  color: #94a3b8;
+}
+
+.sensor-checkboxes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox-item input {
+  cursor: pointer;
+  accent-color: var(--sensor-color);
+  width: 16px;
+  height: 16px;
+}
+
+.checkbox-item span {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+  border-left: 3px solid var(--sensor-color);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.modal-backdrop.dark-theme .checkbox-item span {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.range-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modal-chart-area {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  height: 100%;
+}
